@@ -1,0 +1,5 @@
+include README.md VERIFICATION.md LICENSE
+recursive-include examples *.lrc *.toml
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include docs *.md *.svg

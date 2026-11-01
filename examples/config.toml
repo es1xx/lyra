@@ -1,0 +1,35 @@
+# LYRA preferences. Positive sync offset advances lyrics.
+theme = "neon"
+accent = ""
+provider = "lrclib"
+mode = "duo"
+compact = false
+ascii_art = false
+show_context = true
+animation_intensity = 0.65
+refresh_rate = 30
+preferred_player = ""
+sync_offset_ms = 0
+estimate_words = true
+cache_enabled = true
+cache_ttl_days = 7
+cache_max_entries = 500
+user_agent = "LYRA/0.1.0 (local Linux terminal lyrics client)"
+
+[shortcuts]
+"space" = "toggle_play"
+"left" = "seek_back"
+"right" = "seek_forward"
+"up" = "offset_up"
+"down" = "offset_down"
+"w" = "word"
+"d" = "duo"
+"c" = "compact"
+"a" = "toggle_ascii"
+"s" = "settings"
+"t" = "cycle_theme"
+"p" = "choose_player"
+"r" = "refresh_lyrics"
+"h" = "help"
+"question_mark" = "help"
+"q" = "quit"
