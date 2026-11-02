@@ -6,6 +6,55 @@ HAS_TEXTUAL = importlib.util.find_spec("textual") is not None
 
 @unittest.skipUnless(HAS_TEXTUAL, "Textual is not installed; UI runtime verification unavailable")
 class UITests(unittest.IsolatedAsyncioTestCase):
+    async def test_monochrome_colors_across_main_and_modal_screens(self):
+        import os
+        from colorsys import rgb_to_hsv
+        from unittest.mock import patch
+
+        from lyra.app import LyraApp
+        from lyra.config import THEMES, Config
+
+        for theme in ("white", "cyan", "violet", "green"):
+            # Exercise actual theme colors even when the test shell has NO_COLOR.
+            with patch.dict(os.environ):
+                os.environ.pop("NO_COLOR", None)
+                app = LyraApp(Config(ascii_art=True), demo=True)
+            async with app.run_test(size=(100, 36)) as pilot:
+                await pilot.pause()
+                app.config.theme = theme
+                app.apply_accent()
+                await pilot.pause()
+                target = tuple(int(THEMES[theme][i : i + 2], 16) / 255 for i in (1, 3, 5))
+                hue = rgb_to_hsv(*target)[0]
+                for keys in ((), ("h",), ("escape", "p"), ("escape", "s"), ("tab", "enter")):
+                    if keys == ("tab", "enter"):
+                        await pilot.click("#setting-theme")
+                        self.assertTrue(
+                            app.screen.query_one("#setting-theme").has_class("-expanded")
+                        )
+                    else:
+                        await pilot.press(*keys)
+                    await pilot.pause()
+                    colors = set()
+                    for strip in app.screen._compositor.render_strips():
+                        for segment in strip:
+                            if segment.style:
+                                for color in (segment.style.color, segment.style.bgcolor):
+                                    if color:
+                                        colors.add(color.get_truecolor())
+                    self.assertTrue(colors)
+                    if theme != "white":
+                        self.assertTrue(any(max(color) - min(color) > 12 for color in colors))
+                    for color in colors:
+                        with self.subTest(theme=theme, keys=keys, color=color):
+                            if theme == "white":
+                                self.assertEqual(color.red, color.green)
+                                self.assertEqual(color.green, color.blue)
+                            elif max(color) - min(color) > 12:
+                                actual = rgb_to_hsv(*(value / 255 for value in color))[0]
+                                delta = abs(actual - hue)
+                                self.assertLess(min(delta, 1 - delta), 0.08)
+
     async def test_color_selection_apply_cancel_and_cycle(self):
         from textual.widgets import Select
 

@@ -17,9 +17,9 @@ class HelpScreen(ModalScreen[None]):
         ("question_mark", "dismiss", "Close"),
     ]
     DEFAULT_CSS = """
-    HelpScreen { align: center middle; background: #050810 80%; }
+    HelpScreen { align: center middle; background: $background 80%; }
     #help-box { width: 68; max-width: 95%; height: auto; max-height: 95%;
-        border: round #a3ff79; background: #0e1522; padding: 1 3; overflow-y: auto; }
+        border: round $foreground; background: $surface; padding: 1 3; overflow-y: auto; }
     #help-box Static { height: auto; margin-bottom: 1; }
     """
 
@@ -32,7 +32,7 @@ class HelpScreen(ModalScreen[None]):
             yield Static("◉  LYRA  /  KEYBOARD", markup=False)
             keys = Text()
             for key, action in self.config.shortcuts.items():
-                keys.append(f"{key:18}", style="bold #a3ff79")
+                keys.append(f"{key:18}", style=f"bold {self.config.accent_color}")
                 keys.append(action.replace("_", " ") + "\n")
             yield Static(keys)
             yield Static(
@@ -47,9 +47,9 @@ class HelpScreen(ModalScreen[None]):
 class PlayerScreen(ModalScreen[str | None]):
     BINDINGS = [("escape", "cancel", "Cancel")]
     DEFAULT_CSS = """
-    PlayerScreen { align: center middle; background: #050810 80%; }
+    PlayerScreen { align: center middle; background: $background 80%; }
     #player-box { width: 72; max-width: 95%; height: auto; max-height: 90%;
-        background: #0e1522; padding: 1 2; border: round #67e8f9; }
+        background: $surface; padding: 1 2; border: round $foreground; }
     #player-box Label { margin-bottom: 1; }
     #choices { height: auto; max-height: 16; }
     """
@@ -86,9 +86,9 @@ class PlayerScreen(ModalScreen[str | None]):
 class SettingsScreen(ModalScreen[dict | None]):
     BINDINGS = [("escape", "dismiss", "Cancel")]
     DEFAULT_CSS = """
-    SettingsScreen { align: center middle; background: #050810 80%; }
+    SettingsScreen { align: center middle; background: $background 80%; }
     #settings-box { width: 64; max-width: 95%; height: auto; max-height: 95%;
-        border: round #a3ff79; background: #0e1522; padding: 1 2; overflow-y: auto; }
+        border: round $foreground; background: $surface; padding: 1 2; overflow-y: auto; }
     #settings-box Static { height: auto; margin-bottom: 1; }
     .setting { height: 3; align-vertical: middle; }
     .setting Label { width: 1fr; height: 3; content-align: left middle; }

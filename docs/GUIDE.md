@@ -1,7 +1,7 @@
 # ◉ LYRA
 
 **Your music, in words.** A native Linux terminal lyrics player with MPRIS discovery,
-word and duo karaoke, a dark neon interface, and honest timing indicators.
+word and duo karaoke, a dark monochrome interface, and honest timing indicators.
 Python 3.12+; Spotify desktop and any browser/player exposing MPRIS2 on your
 session bus. No account, root access, microphone, or audio capture is needed to run it.
 
@@ -103,6 +103,9 @@ remain normal text with their original spelling. Preferences are saved on exit.
 Compact view hides status and timing labels; C restores them. With small lyric
 text enabled, the current full line remains visible below the active word.
 
+Each theme colors the whole interface: lyrics, track details, progress, help,
+player chooser, and settings. White uses only white, gray, and black; colored
+themes use shades of the selected color on neutral dark backgrounds.
 White is the default for new configurations. Choose a color with **S**, or cycle
 with **T**. Existing saved themes and custom accents are preserved until changed.
 

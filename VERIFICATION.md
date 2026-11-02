@@ -1,5 +1,31 @@
 # Verification record
 
+## Full monochrome themes (2026-11-02)
+
+Theme colors now cover the entire interface, including all metadata, lyric
+context, progress, notices, help, player selection, settings, switches, and
+expanded color choices. Neutral dark surfaces replace blue-tinted backgrounds.
+Word transitions dim the chosen color without blending toward white.
+
+Verification commands:
+
+```bash
+/home/arch/.local/share/pipx/venvs/lyra-terminal/bin/python scripts/verify.py --sandbox-poll
+# 90 tests passed, zero skipped.
+ruff check src tests scripts
+ruff format --check src tests scripts
+.venv/bin/python -m build --wheel --no-isolation
+git diff --check
+sober preflight
+```
+
+A new headless rendering check inspects actual compositor foreground and
+background colors after live theme changes. It covers white, cyan, violet, and
+green across the main ASCII screen, help, player chooser, settings, and expanded
+color selector. White must have equal RGB channels everywhere; colored themes
+must retain the selected hue. Existing display settings and cancellation tests
+remain in place. Live desktop playback was not retested.
+
 ## White default, color picker, and ASCII parentheses (2026-11-02)
 
 New configurations use white. Display settings (S) now offer a color selector;

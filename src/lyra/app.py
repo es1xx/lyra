@@ -11,6 +11,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.color import Color
 from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.theme import Theme
 from textual.widgets import Static
 
 from lyra.config import THEMES, Config, cache_path
@@ -35,29 +36,29 @@ class LyraApp(App[None]):
     AUTO_FOCUS = None
     BINDINGS = [Binding("ctrl+c", "quit", "Quit", priority=True)]
     CSS = """
-    Screen { background: #080c14; color: #dfe9f5; align: center middle; }
+    Screen { background: $background; color: $foreground; align: center middle; }
     #shell { width: 100%; max-width: 104; height: 100%; max-height: 40;
-        border: round #263449; padding: 1 3; background: #0c121d; }
+        border: round $foreground 25%; padding: 1 3; background: $surface; }
     #masthead { height: 2; }
     #brand { width: 1fr; text-style: bold; }
-    #connection { width: auto; color: #8295ae; text-align: right; }
+    #connection { width: auto; color: $foreground 70%; text-align: right; }
     #metadata { height: 5; }
-    #player { color: #8295ae; height: 1; }
+    #player { color: $foreground 70%; height: 1; }
     #title { text-style: bold; height: 2; content-align: left middle; }
-    #artist { color: #a7b8cf; height: 1; }
+    #artist { color: $foreground 85%; height: 1; }
     #stage { height: 1fr; min-height: 5; content-align: center middle; align: center middle; }
-    #previous, #following { height: 1; color: #62748e; text-align: center; width: 100%; }
+    #previous, #following { height: 1; color: $foreground 55%; text-align: center; width: 100%; }
     #active { height: 3; min-height: 1; content-align: center middle; text-style: bold;
         width: 100%; text-align: center; }
-    #line { height: 2; color: #a7b8cf; content-align: center middle; text-align: center; }
+    #line { height: 2; color: $foreground 85%; content-align: center middle; text-align: center; }
     #plain-scroll { display: none; height: 1fr; width: 100%; }
     #plain { height: auto; text-align: center; padding: 1; }
-    #source { height: 1; color: #8295ae; text-align: center; }
+    #source { height: 1; color: $foreground 70%; text-align: center; }
     #progress { height: 1; margin-top: 1; }
-    #times { height: 1; color: #8295ae; }
+    #times { height: 1; color: $foreground 70%; }
     #status { height: 1; margin-top: 1; }
-    #notice { height: 2; color: #a7b8cf; content-align: center middle; text-align: center; }
-    #keys { height: 1; color: #62748e; text-align: center; }
+    #notice { height: 2; color: $foreground 85%; content-align: center middle; text-align: center; }
+    #keys { height: 1; color: $foreground 55%; text-align: center; }
     .short #shell { padding: 0 2; }
     .short #metadata { height: 3; }
     .short #title { height: 1; }
@@ -66,7 +67,7 @@ class LyraApp(App[None]):
     .short #stage { min-height: 1; }
     .short #notice { height: 1; }
     .short #progress, .short #status { margin-top: 0; }
-    .compact #shell { border: none; padding: 0; max-height: 100%; background: #080c14; }
+    .compact #shell { border: none; padding: 0; max-height: 100%; background: $background; }
     .compact #masthead, .compact #metadata, .compact #source, .compact #progress,
     .compact #times, .compact #status, .compact #notice, .compact #keys,
     .compact #previous, .compact #following, .compact #line { display: none; }
@@ -251,7 +252,7 @@ class LyraApp(App[None]):
         # Color-only transitions never delay or debounce a word boundary.
         intensity = self.config.animation_intensity
         blend = round((1 - frame.progress) * intensity * 0.35, 1) if frame.active else 0
-        color = accent.blend(Color.parse("#ffffff"), blend).hex
+        color = accent.blend(Color.parse("#000000"), blend).hex
         display = safe_text(active.upper())
         if self.config.ascii_art and frame.active:
             stage_height = self.stage.size.height
@@ -280,7 +281,9 @@ class LyraApp(App[None]):
         fraction = min(1.0, position / duration) if duration else 0
         fill = min(width - 1, int(fraction * (width - 1)))
         bar = Text("━" * fill + "●", style=self.config.accent_color)
-        bar.append("━" * (width - fill - 1), style="#263449")
+        bar.append(
+            "━" * (width - fill - 1), style=Color.parse(self.config.accent_color).darken(0.6).hex
+        )
         self.put("progress", bar)
         elapsed = timestamp(position) if player and player.clock.known else "--:--"
         total = timestamp(duration) if duration else "--:--"
@@ -434,8 +437,33 @@ class LyraApp(App[None]):
         self.push_screen(SettingsScreen(self.config), applied)
 
     def apply_accent(self) -> None:
-        self.widgets["brand"].styles.color = self.config.accent_color
-        self.shell.styles.border = ("round", self.config.accent_color)
+        accent = self.config.accent_color
+        self.register_theme(
+            Theme(
+                name=f"lyra-{accent[1:]}",
+                primary=accent,
+                secondary=accent,
+                accent=accent,
+                foreground=accent,
+                success=accent,
+                warning=accent,
+                error=accent,
+                background="#080808",
+                surface="#101010",
+                panel="#181818",
+                variables={
+                    "text": accent,
+                    "text-muted": f"{accent} 70%",
+                    "text-disabled": f"{accent} 45%",
+                    "button-color-foreground": "#080808",
+                    "block-cursor-foreground": accent,
+                    "block-cursor-background": f"{accent} 20%",
+                },
+            )
+        )
+        self.theme = f"lyra-{accent[1:]}"
+        self.widgets["brand"].styles.color = accent
+        self.shell.styles.border = ("round", accent)
 
     def action_cycle_theme(self) -> None:
         names = list(THEMES)

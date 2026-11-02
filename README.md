@@ -4,7 +4,7 @@
 
 ### Your music, in words.
 
-A neon terminal lyrics player for Linux.<br>
+A monochrome terminal lyrics player for Linux.<br>
 Follow your music, one word at a time.
 
 ![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-67e8f9)
@@ -33,7 +33,8 @@ letters, or keep things minimal with compact mode.
 - **Timing you can understand.** Distinguishes real word timestamps, estimated
   word timing, line timing, and unsynchronized lyrics.
 - **Choose your color.** White by default, plus violet, green, cyan, and amber;
-  choose in display settings with **S** or cycle with **T**. Custom accents,
+  each colors the whole interface, including lyrics, metadata, menus, and controls.
+  Choose in display settings with **S** or cycle with **T**. Custom accents,
   small lyric context, and compact view are supported.
 - **Online or local lyrics.** Looks up lyrics through LRCLIB, caches successful
   results, and accepts your own UTF-8 LRC files.
@@ -114,7 +115,7 @@ python -m venv .venv
 .venv/bin/python -m ruff format --check src tests scripts
 ```
 
-The current checkout passes **89 automated tests**, including parsing, timing,
+The current checkout passes **90 automated tests**, including parsing, timing,
 player selection, mocked lyric requests, configuration, and headless UI controls.
 Live Spotify/browser integration still needs desktop acceptance checks. The
 preview above is captured from the application's built-in demo.
