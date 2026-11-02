@@ -6,6 +6,32 @@ HAS_TEXTUAL = importlib.util.find_spec("textual") is not None
 
 @unittest.skipUnless(HAS_TEXTUAL, "Textual is not installed; UI runtime verification unavailable")
 class UITests(unittest.IsolatedAsyncioTestCase):
+    async def test_auto_sync_and_explicit_estimated_words_setting(self):
+        from textual.widgets import Select
+
+        from lyra.app import LyraApp
+        from lyra.config import Config
+        from lyra.lyrics.parser import parse_lrc
+
+        app = LyraApp(Config(mode="word"), demo=True)
+        async with app.run_test(size=(100, 36)) as pilot:
+            await pilot.pause()
+            app.manager.active.clock.update(position=3, status="Paused")
+            app.lyrics = parse_lrc("[00:01]A held note\n[00:10]Next line", 15, source="test")
+            app.set_mode("word")
+            await pilot.pause()
+            self.assertEqual(app.last_updates["active"].plain, "A HELD NOTE")
+            self.assertIn("LINE SYNC", app.last_updates["source"])
+            self.assertIn("AUTO LINE MODE", app.last_updates["status"].plain)
+            await pilot.press("s")
+            app.screen.query_one("#setting-sync-mode", Select).value = "estimated"
+            await pilot.click("#apply-settings")
+            await pilot.pause()
+            self.assertEqual(app.config.sync_mode, "estimated")
+            self.assertNotEqual(app.last_updates["active"].plain, "A HELD NOTE")
+            self.assertTrue(app.timeline.at(3).approximate)
+            self.assertIn("ESTIMATED", app.last_updates["source"])
+
     async def test_monochrome_colors_across_main_and_modal_screens(self):
         import os
         from colorsys import rgb_to_hsv
@@ -97,6 +123,8 @@ class UITests(unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             self.assertEqual(app.config.mode, "word")
             self.assertEqual(app.config.sync_offset_ms, 50)
+            await pilot.press("0")
+            self.assertEqual(app.config.sync_offset_ms, 0)
             self.assertGreaterEqual(app.manager.active.clock.read(), 5)
             await pilot.press("h")
             self.assertIsInstance(app.screen, HelpScreen)

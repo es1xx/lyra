@@ -113,6 +113,41 @@ class ManagerTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(self.first.clock.known)
         self.assertIn(self.first.name, self.manager.players)
 
+    async def test_getall_position_fallback_when_position_get_fails(self):
+        self.manager.call = AsyncMock(
+            side_effect=[
+                [{"PlaybackStatus": "Paused", "Position": 12_000_000}],
+                PlayerError("Position unavailable"),
+            ]
+        )
+        await self.manager._refresh(self.first.name)
+        self.assertTrue(self.first.clock.known)
+        self.assertEqual(self.first.clock.read(), 12)
+
+    async def test_polling_accounts_for_response_latency(self):
+        now = [100.0]
+        self.first.clock = PlaybackClock(lambda: now[0])
+
+        async def call(*args):
+            now[0] += 0.2
+            return [{"PlaybackStatus": "Playing"}] if args[2] == "GetAll" else [20_000_000]
+
+        self.manager.call = call
+        await self.manager._refresh(self.first.name)
+        self.assertAlmostEqual(self.first.clock.read(), 20.1)
+
+    async def test_seek_signal_wins_over_inflight_position_response(self):
+        async def call(*args):
+            if args[2] == "GetAll":
+                return [{"PlaybackStatus": "Paused"}]
+            self.first.clock.update(position=42)
+            self.first.revision += 1
+            return [3_000_000]
+
+        self.manager.call = call
+        await self.manager._refresh(self.first.name)
+        self.assertEqual(self.first.clock.read(), 42)
+
     async def test_disconnected_player_removed(self):
         self.manager.call = AsyncMock(side_effect=PlayerError("Disconnected"))
         await self.manager._refresh(self.first.name)

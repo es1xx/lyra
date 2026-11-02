@@ -81,6 +81,7 @@ player, session D-Bus connection, or network requests.
 | Space | Pause / resume |
 | Left / Right | Seek −5 / +5 seconds |
 | Up / Down | Advance / delay lyrics by 50 ms |
+| 0 | Reset manual lyric offset |
 | W / D | Word / duo mode |
 | C | Compact view |
 | A | Toggle large ASCII letters; enabling selects word mode |
@@ -111,12 +112,28 @@ with **T**. Existing saved themes and custom accents are preserved until changed
 
 ## Timing and lyric sources
 
+**Auto** is the default synchronization setting, including for existing config
+files without `sync_mode`. It uses real word timestamps when present and whole
+lines otherwise. You do not need to adjust individual words with the arrow keys.
+Use **S → Synchronization** to explicitly enable approximate word animation.
+Changing this setting applies immediately to the loaded lyrics. Press **0**
+to clear any manual offset left from earlier adjustments.
+
+The playback clock reconciles with MPRIS every half second, compensates for
+request latency using the request midpoint, and slews small clock corrections
+without reversing playback. Seek signals and large position changes still take
+effect immediately. Repeated sub-second polls of a whole-second Position value
+do not repeatedly restart the interpolator. These changes cannot repair wrong
+source timestamps or identify a recording by listening to its audio.
+
+
 The UI distinguishes three kinds of synchronized data:
 
 - **WORD TIMESTAMPS**: actual word/group timestamps from enhanced LRC or LRCLIB
   Lyricsfile YAML. End markers and explicit word ends preserve pauses.
-- **≈ ESTIMATED WORD TIMING**: standard LRC lines divided proportionally by word
-  length. Useful as a guide, often wrong around rests or held notes.
+- **≈ ESTIMATED WORD TIMING**: opt-in via **S → Synchronization → Estimated words**.
+  Standard LRC lines divided proportionally by word length; this can be wrong
+  around rests or held notes, and a global offset cannot fix individual words.
 - **LINE TIMESTAMPS**: exact line starts with estimation disabled; a whole line is
   shown, regardless of word/duo mode. Word precision cannot be recovered from lines.
 
@@ -214,10 +231,11 @@ refresh_rate = 30                 # 5–60 FPS
 preferred_player = ""
 sync_offset_ms = 0
 estimate_words = true
+sync_mode = "auto"               # auto | estimated
 cache_enabled = true
 cache_ttl_days = 7                # 1–365
 cache_max_entries = 500           # 1–10000
-user_agent = "LYRA/0.1.0 (local Linux terminal lyrics client)"
+user_agent = "LYRA/0.1.1 (+https://github.com/es1xx/lyra)"
 ```
 
 An optional `[shortcuts]` table **replaces** the default map. Action names and all

@@ -11,10 +11,11 @@ refresh_rate = 30
 preferred_player = ""
 sync_offset_ms = 0
 estimate_words = true
+sync_mode = "auto" # auto: exact words or whole lines; estimated: approximate words
 cache_enabled = true
 cache_ttl_days = 7
 cache_max_entries = 500
-user_agent = "LYRA/0.1.0 (local Linux terminal lyrics client)"
+user_agent = "LYRA/0.1.1 (+https://github.com/es1xx/lyra)"
 
 [shortcuts]
 "space" = "toggle_play"
@@ -22,6 +23,7 @@ user_agent = "LYRA/0.1.0 (local Linux terminal lyrics client)"
 "right" = "seek_forward"
 "up" = "offset_up"
 "down" = "offset_down"
+"0" = "reset_offset"
 "w" = "word"
 "d" = "duo"
 "c" = "compact"

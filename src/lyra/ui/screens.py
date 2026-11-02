@@ -92,7 +92,7 @@ class SettingsScreen(ModalScreen[dict | None]):
     #settings-box Static { height: auto; margin-bottom: 1; }
     .setting { height: 3; align-vertical: middle; }
     .setting Label { width: 1fr; height: 3; content-align: left middle; }
-    #setting-theme { width: 30; }
+    #setting-theme, #setting-sync-mode { width: 30; }
     #settings-actions { height: 3; margin-top: 1; align-horizontal: right; }
     """
 
@@ -122,8 +122,20 @@ class SettingsScreen(ModalScreen[dict | None]):
                 with Horizontal(classes="setting"):
                     yield Label(label, markup=False)
                     yield Switch(getattr(self.config, name), id=f"setting-{name}")
+            with Horizontal(classes="setting"):
+                yield Label("Synchronization", markup=False)
+                yield Select(
+                    [
+                        ("Auto: exact words / lines", "auto"),
+                        ("Estimated words (approx.)", "estimated"),
+                    ],
+                    value=self.config.sync_mode,
+                    allow_blank=False,
+                    id="setting-sync-mode",
+                )
             yield Static(
                 "ASCII starts in word mode. Long words and small windows use normal text.\n"
+                "Auto uses whole lines when word timestamps are unavailable.\n"
                 "Tab moves · Space toggles · Escape cancels",
                 markup=False,
             )
@@ -139,4 +151,5 @@ class SettingsScreen(ModalScreen[dict | None]):
                 for name in ("ascii_art", "show_context", "compact")
             }
             result["theme"] = self.query_one("#setting-theme", Select).value
+            result["sync_mode"] = self.query_one("#setting-sync-mode", Select).value
             self.dismiss(result)

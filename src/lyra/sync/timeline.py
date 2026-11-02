@@ -15,12 +15,12 @@ class Frame:
 
 
 class Timeline:
-    def __init__(self, lyrics: Lyrics, mode: str = "duo") -> None:
+    def __init__(self, lyrics: Lyrics, mode: str = "duo", *, estimate: bool = True) -> None:
         self.lyrics = lyrics
         self.groups: list[Word] = []
         size = 1 if mode == "word" else 2
         for line in lyrics.lines:
-            if not line.words:
+            if not line.words or (not estimate and any(word.approximate for word in line.words)):
                 if line.text:
                     self.groups.append(Word(line.start, line.end, line.text))
                 continue

@@ -90,7 +90,7 @@ class LyraApp(App[None]):
         self.demo = demo
         self.manager = DemoManager() if demo else MPRISManager(config.preferred_player)
         self.lyrics = Lyrics()
-        self.timeline = Timeline(self.lyrics, config.mode)
+        self.timeline = Timeline(self.lyrics, config.mode, estimate=config.sync_mode == "estimated")
         self.track_key: tuple | None = None
         self.lyrics_task: asyncio.Task | None = None
         self.manager_task: asyncio.Task | None = None
@@ -264,13 +264,15 @@ class LyraApp(App[None]):
                 5 if is_art(display) else 1 if self.main_screen.has_class("short") else 3
             )
         self.put("active", Text(display, style=f"bold {color}"))
-        self.put("line", safe_text(frame.line))
+        self.put("line", safe_text(frame.line if frame.line != frame.active else ""))
         timing = {
             "word": "WORD TIMESTAMPS",
             "approximate": "≈ ESTIMATED WORD TIMING",
             "line": "LINE TIMESTAMPS",
             "unsynced": "UNSYNCED · NO TIMING",
         }[self.lyrics.timing]
+        if self.lyrics.timing == "approximate" and self.config.sync_mode == "auto":
+            timing = "AUTO · LINE SYNC (NO EXACT WORD TIMESTAMPS)"
         self.put(
             "source", safe_text(f"{timing}  ·  {self.lyrics.source}" if self.lyrics.source else "")
         )
@@ -290,11 +292,13 @@ class LyraApp(App[None]):
         self.put("times", elapsed + " " * max(1, width - len(elapsed) - len(total)) + total)
         status = player.clock.status.upper() if player else "DISCONNECTED"
         rate = f"  {player.clock.rate:g}×" if player and player.clock.rate != 1 else ""
+        mode = self.config.mode.upper()
+        if self.lyrics.timing in ("line", "approximate") and self.config.sync_mode == "auto":
+            mode = "AUTO LINE"
         self.put(
             "status",
             Text(
-                f"{self.config.mode.upper()} MODE   SYNC {self.config.sync_offset_ms:+d}ms   "
-                f"{status}{rate}",
+                f"{mode} MODE   SYNC {self.config.sync_offset_ms:+d}ms   {status}{rate}",
                 style=self.config.accent_color,
             ),
         )
@@ -317,7 +321,9 @@ class LyraApp(App[None]):
         if self.lyrics_task:
             self.lyrics_task.cancel()
         self.lyrics = Lyrics()
-        self.timeline = Timeline(self.lyrics, self.config.mode)
+        self.timeline = Timeline(
+            self.lyrics, self.config.mode, estimate=self.config.sync_mode == "estimated"
+        )
         self.lyrics_message = "Finding your words…" if track else "Waiting for music…"
         if track:
             self.lyrics_task = asyncio.create_task(self.fetch_lyrics(track, force), name="lyrics")
@@ -341,14 +347,16 @@ class LyraApp(App[None]):
             else:
                 return
             self.lyrics = lyrics
-            self.timeline = Timeline(lyrics, self.config.mode)
+            self.timeline = Timeline(
+                lyrics, self.config.mode, estimate=self.config.sync_mode == "estimated"
+            )
             self.lyrics_message = (
                 "Local file pinned · R reloads"
                 if self.lyrics_file
                 else (
                     "Instrumental track"
                     if lyrics.instrumental
-                    else "≈ Word timing estimated from lines"
+                    else "Line timestamps only · S changes synchronization"
                     if lyrics.timing == "approximate"
                     else "Plain lyrics · synchronization unavailable"
                     if lyrics.timing == "unsynced"
@@ -393,9 +401,13 @@ class LyraApp(App[None]):
         self.config.sync_offset_ms = max(-60000, self.config.sync_offset_ms - 50)
         self.flash(f"Lyrics delayed · {self.config.sync_offset_ms:+d}ms")
 
+    def action_reset_offset(self) -> None:
+        self.config.sync_offset_ms = 0
+        self.flash("Lyric offset reset · following player timestamps")
+
     def set_mode(self, mode: str) -> None:
         self.config.mode = mode
-        self.timeline = Timeline(self.lyrics, mode)
+        self.timeline = Timeline(self.lyrics, mode, estimate=self.config.sync_mode == "estimated")
 
     def action_word(self) -> None:
         self.set_mode("word")
@@ -428,6 +440,8 @@ class LyraApp(App[None]):
                 self.config.ascii_art = result["ascii_art"]
                 self.config.show_context = result["show_context"]
                 self.config.compact = result["compact"]
+                self.config.sync_mode = result["sync_mode"]
+                self.set_mode(self.config.mode)
                 if result["theme"] != self.config.theme:
                     self.config.theme = result["theme"]
                     self.config.accent = ""

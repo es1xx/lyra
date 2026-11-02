@@ -20,6 +20,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(load_config(self.path).mode, "duo")
         self.assertEqual(load_config(self.path).theme, "white")
         self.assertEqual(load_config(self.path).accent_color, "#ffffff")
+        self.assertEqual(load_config(self.path).sync_mode, "auto")
         self.assertFalse(self.path.exists())
 
     def test_palette_roundtrip_and_legacy_theme(self):
@@ -31,7 +32,12 @@ class ConfigTests(unittest.TestCase):
 
     def test_atomic_roundtrip(self):
         config = Config(
-            mode="word", sync_offset_ms=-250, accent="#abcdef", ascii_art=True, show_context=False
+            mode="word",
+            sync_offset_ms=-250,
+            accent="#abcdef",
+            ascii_art=True,
+            show_context=False,
+            sync_mode="estimated",
         )
         save_config(config, self.path)
         self.assertEqual(load_config(self.path), config)
@@ -40,6 +46,7 @@ class ConfigTests(unittest.TestCase):
     def test_invalid_values(self):
         for values in [
             dict(theme="bad"),
+            dict(sync_mode="bad"),
             dict(refresh_rate=120),
             dict(refresh_rate=True),
             dict(animation_intensity=float("nan")),

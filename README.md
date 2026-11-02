@@ -80,6 +80,7 @@ and run `lyra --doctor` if a song is not detected.
 | `Space` | Pause / resume |
 | `←` / `→` | Seek backward / forward 5 seconds |
 | `↑` / `↓` | Adjust lyric offset by 50 ms |
+| `0` | Reset the manual lyric offset |
 | `W` / `D` | Word / duo karaoke |
 | `A` | Toggle large ASCII words |
 | `C` | Toggle compact view |
@@ -96,7 +97,10 @@ and [example config](examples/config.toml) for themes, shortcuts, cache, and tim
 ## About synchronization
 
 Enhanced LRC and supported Lyricsfile data can carry real word timestamps.
-Standard LRC only provides line starts: LYRA labels its word estimates with **≈**.
+**Auto sync** uses exact word timing when present and full lines otherwise.
+Standard LRC only provides line starts; approximate word animation is available
+through **S → Synchronization → Estimated words** and is labeled **≈**.
+Arrow keys adjust the overall offset, not individual word timestamps.
 Plain lyrics remain **UNSYNCED**. A player without playback position cannot supply
 synchronized karaoke.
 
@@ -115,7 +119,7 @@ python -m venv .venv
 .venv/bin/python -m ruff format --check src tests scripts
 ```
 
-The current checkout passes **90 automated tests**, including parsing, timing,
+The current checkout passes **100 automated tests**, including parsing, timing,
 player selection, mocked lyric requests, configuration, and headless UI controls.
 Live Spotify/browser integration still needs desktop acceptance checks. The
 preview above is captured from the application's built-in demo.

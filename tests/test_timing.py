@@ -104,6 +104,19 @@ class TimelineTests(unittest.TestCase):
     def test_estimation_flag(self):
         self.assertTrue(Timeline(parse_lrc("[00:00]a b", 4)).at(1).approximate)
 
+    def test_auto_uses_lines_instead_of_guessed_word_boundaries(self):
+        lyrics = parse_lrc("[00:01]A long held note\n[00:10]Next line", 15)
+        auto = Timeline(lyrics, "word", estimate=False)
+        for position in (1, 2, 5, 9.9):
+            self.assertEqual(auto.at(position).active, "A long held note")
+        self.assertEqual(auto.at(10).active, "Next line")
+        self.assertEqual(auto.at(0).active, "")
+
+    def test_auto_preserves_exact_words_and_explicit_rests(self):
+        auto = Timeline(self.lyrics, "word", estimate=False)
+        self.assertEqual(auto.at(2.5).active, "two")
+        self.assertEqual(auto.at(4.5).active, "")
+
     def test_plain_has_no_karaoke(self):
         self.assertEqual(Timeline(parse_lrc("plain lyrics")).at(1).active, "")
 
@@ -159,3 +172,40 @@ class ClockTests(unittest.TestCase):
         for rate in [0, -1, float("nan"), float("inf")]:
             self.clock.update(rate=rate)
             self.assertEqual(self.clock.rate, 1)
+
+    def test_poll_jitter_correction_never_reverses_clock(self):
+        self.now += 1
+        self.clock.sample(10.8, self.now)
+        positions = []
+        for _ in range(10):
+            self.now += 0.05
+            positions.append(self.clock.read())
+        self.assertEqual(positions, sorted(positions))
+        self.assertAlmostEqual(positions[-1], 11.3)
+
+    def test_repeated_whole_second_samples_do_not_restart_playback(self):
+        self.clock.sample(10, self.now)
+        self.now += 0.5
+        self.clock.sample(10, self.now)
+        self.assertAlmostEqual(self.clock.read(), 10.5)
+        self.now += 0.5
+        self.clock.sample(11, self.now)
+        self.assertAlmostEqual(self.clock.read(), 11)
+
+    def test_samples_compensate_latency_and_snap_to_seek(self):
+        self.now += 0.2
+        self.clock.sample(10.1, self.now - 0.1)
+        self.assertAlmostEqual(self.clock.read(), 10.2)
+        self.clock.sample(40, self.now)
+        self.assertAlmostEqual(self.clock.read(), 40)
+        self.clock.sample(3, self.now)
+        self.assertAlmostEqual(self.clock.read(), 3)
+
+    def test_paused_samples_remain_exact_and_invalid_samples_are_ignored(self):
+        self.clock.update(status="Paused")
+        self.now += 2
+        self.clock.sample(20, self.now - 1)
+        self.assertEqual(self.clock.read(), 20)
+        for value in (float("nan"), float("inf"), -1):
+            self.clock.sample(value, self.now)
+            self.assertEqual(self.clock.read(), 20)

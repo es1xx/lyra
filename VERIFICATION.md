@@ -1,5 +1,45 @@
 # Verification record
 
+## Synchronization update 0.1.1 (2026-11-02)
+
+Auto synchronization is the default for new and existing configurations without
+`sync_mode`. It retains exact word timing but falls back to whole lines where
+word times were estimated. Estimated word animation remains an explicit setting
+under S → Synchronization. Settings changes rebuild the active timeline without
+another network request. Status labels distinguish auto line sync from words;
+0 clears the user's manual offset. Default keyboard maps gain this shortcut
+while fully customized maps remain untouched.
+
+MPRIS reconciliation now runs every half second. Position samples compensate
+for round-trip latency using the request midpoint. Small corrections are applied
+over half a second, keeping playback monotonic, while seek signals and large
+jumps remain immediate. Repeated whole-second samples no longer repeatedly reset
+the interpolator. GetAll Position is used only as a fallback when an explicit
+Position read fails; signal revisions protect in-flight replies.
+
+Verification:
+
+```bash
+/home/arch/.local/share/pipx/venvs/lyra-terminal/bin/python scripts/verify.py --sandbox-poll
+# 100 tests passed, zero skipped.
+ruff check src tests scripts
+ruff format --check src tests scripts
+.venv/bin/python -m build --no-isolation
+PYTHONPATH=src /home/arch/.local/share/pipx/venvs/lyra-terminal/bin/python -m lyra --version
+# LYRA 0.1.1
+git diff --check
+sober preflight
+```
+
+Focused timing, MPRIS, configuration, and auto/estimated UI checks also passed
+after the final wording and persistence adjustments; keyboard/configuration
+checks were repeated after adding reset-offset. Regression scenarios cover
+latency, quantized positions, backward and forward seeks, pauses, signal races,
+Position fallback, explicit rests, automatic line selection, and settings apply.
+The source distribution and wheel build successfully. The user reports Spotify;
+live Spotify playback/audio alignment cannot be verified in this sandbox. This
+release does not derive word timings from audio or repair incorrect source LRC.
+
 ## Full monochrome themes (2026-11-02)
 
 Theme colors now cover the entire interface, including all metadata, lyric

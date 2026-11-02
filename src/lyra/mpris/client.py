@@ -169,7 +169,7 @@ class MPRISManager:
             else:
                 self.message = "No MPRIS player exposed · start music or run lyra --doctor"
             try:
-                await asyncio.wait_for(self.wakeup.wait(), 2)
+                await asyncio.wait_for(self.wakeup.wait(), 0.5)
                 # Coalesce bursts of PropertiesChanged without starving the event loop.
                 await asyncio.sleep(0.05)
             except TimeoutError:
@@ -191,18 +191,15 @@ class MPRISManager:
                     pass
             player = self.players[name]
             revision = player.revision
+            started = player.clock.now()
             properties = await self.call(name, PROPERTIES, "GetAll", "s", [INTERFACE])
+            sampled_at = (started + player.clock.now()) / 2
+            fallback = None
             if player.revision == revision:
-                player.apply(properties[0])
-            # Position normally does NOT emit PropertiesChanged; query it explicitly.
-            revision = player.revision
-            try:
-                position = await self.call(name, PROPERTIES, "Get", "ss", [INTERFACE, "Position"])
-                if player.revision == revision:
-                    player.clock.update(position=float(unwrap(position[0])) / 1_000_000)
-            except PlayerError:
-                # A track never sampled successfully remains visibly unsynchronized.
-                pass
+                data = dict(unwrap(properties[0]))
+                fallback = data.pop("Position", None)
+                player.apply(data)
+            await self._sample_position(player, fallback, sampled_at)
             self.player_errors.pop(name, None)
         except asyncio.CancelledError:
             raise
@@ -210,6 +207,26 @@ class MPRISManager:
             self.player_errors[name] = str(error)
             LOG.debug("Player %s unavailable", name, exc_info=True)
             self.players.pop(name, None)
+
+    async def _sample_position(
+        self, player: Player, fallback: float | None, sampled_at: float
+    ) -> None:
+        # Position does not emit PropertiesChanged; query it explicitly and
+        # discard replies superseded by a seek, track change, or status signal.
+        revision = player.revision
+        try:
+            started = player.clock.now()
+            position = await self.call(
+                player.name, PROPERTIES, "Get", "ss", [INTERFACE, "Position"]
+            )
+            if player.revision == revision:
+                player.clock.sample(
+                    float(unwrap(position[0])) / 1_000_000,
+                    (started + player.clock.now()) / 2,
+                )
+        except PlayerError:
+            if fallback is not None and player.revision == revision:
+                player.clock.sample(float(fallback) / 1_000_000, sampled_at)
 
     async def control(self, command: str, seconds: float = 0) -> None:
         player = self.active

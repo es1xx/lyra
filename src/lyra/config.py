@@ -25,6 +25,7 @@ KEYS = {
     "right": "seek_forward",
     "up": "offset_up",
     "down": "offset_down",
+    "0": "reset_offset",
     "w": "word",
     "d": "duo",
     "c": "compact",
@@ -57,10 +58,11 @@ class Config:
     preferred_player: str = ""
     sync_offset_ms: int = 0
     estimate_words: bool = True
+    sync_mode: str = "auto"
     cache_enabled: bool = True
     cache_ttl_days: int = 7
     cache_max_entries: int = 500
-    user_agent: str = "LYRA/0.1.0 (local Linux terminal lyrics client)"
+    user_agent: str = "LYRA/0.1.1 (+https://github.com/es1xx/lyra)"
     shortcuts: dict[str, str] = field(default_factory=lambda: dict(KEYS))
 
     @property
@@ -80,6 +82,8 @@ class Config:
             raise ConfigError(f"theme must be {'/'.join(THEMES)}; mode must be word/duo")
         if self.provider not in ("lrclib", "local"):
             raise ConfigError("provider must be lrclib or local")
+        if self.sync_mode not in ("auto", "estimated"):
+            raise ConfigError("sync_mode must be auto or estimated")
         if self.accent and not re.fullmatch(r"#[0-9a-fA-F]{6}", self.accent):
             raise ConfigError("accent must be empty or a #RRGGBB color")
         if not 5 <= self.refresh_rate <= 60:
@@ -119,9 +123,9 @@ def load_config(path: Path | None = None) -> Config:
         if unknown:
             raise ConfigError(f"Unknown config options: {', '.join(sorted(unknown))}")
         config = Config(**raw)
-        old_defaults = {key: action for key, action in KEYS.items() if key not in ("a", "s")}
+        old_defaults = {key: action for key, action in KEYS.items() if key not in ("a", "s", "0")}
         if all(config.shortcuts.get(key) == action for key, action in old_defaults.items()):
-            for key in ("a", "s"):
+            for key in ("a", "s", "0"):
                 config.shortcuts.setdefault(key, KEYS[key])
         config.validate()
         return config
