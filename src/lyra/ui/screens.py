@@ -5,7 +5,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Label, OptionList, Static
 from textual.widgets.option_list import Option
 
-from lyra.config import Config
+from lyra.config import THEMES, Config
 from lyra.mpris.client import MPRISManager
 from lyra.utils.text import safe_text
 
@@ -92,6 +92,7 @@ class SettingsScreen(ModalScreen[dict | None]):
     #settings-box Static { height: auto; margin-bottom: 1; }
     .setting { height: 3; align-vertical: middle; }
     .setting Label { width: 1fr; height: 3; content-align: left middle; }
+    #setting-theme { width: 30; }
     #settings-actions { height: 3; margin-top: 1; align-horizontal: right; }
     """
 
@@ -101,10 +102,18 @@ class SettingsScreen(ModalScreen[dict | None]):
 
     def compose(self) -> ComposeResult:
         from textual.containers import Horizontal
-        from textual.widgets import Button, Switch
+        from textual.widgets import Button, Select, Switch
 
         with Vertical(id="settings-box"):
             yield Static("◉  LYRA / DISPLAY SETTINGS", markup=False)
+            with Horizontal(classes="setting"):
+                yield Label("Color", markup=False)
+                yield Select(
+                    [(name.capitalize(), name) for name in THEMES],
+                    value=self.config.theme,
+                    allow_blank=False,
+                    id="setting-theme",
+                )
             for name, label in (
                 ("ascii_art", "Large ASCII words"),
                 ("show_context", "Keep the small lyric text"),
@@ -122,12 +131,12 @@ class SettingsScreen(ModalScreen[dict | None]):
                 yield Button("Apply", id="apply-settings", variant="success")
 
     def on_button_pressed(self, event) -> None:
-        from textual.widgets import Switch
+        from textual.widgets import Select, Switch
 
         if event.button.id == "apply-settings":
-            self.dismiss(
-                {
-                    name: self.query_one(f"#setting-{name}", Switch).value
-                    for name in ("ascii_art", "show_context", "compact")
-                }
-            )
+            result = {
+                name: self.query_one(f"#setting-{name}", Switch).value
+                for name in ("ascii_art", "show_context", "compact")
+            }
+            result["theme"] = self.query_one("#setting-theme", Select).value
+            self.dismiss(result)

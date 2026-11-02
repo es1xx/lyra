@@ -1,5 +1,33 @@
 # Verification record
 
+## White default, color picker, and ASCII parentheses (2026-11-02)
+
+New configurations use white. Display settings (S) now offer a color selector;
+T still cycles themes. White, violet, green, cyan, and amber are available, and
+legacy neon configurations remain valid. Existing saved themes and custom
+accents are preserved until the user changes color. The ASCII font includes
+both parentheses, so bracketed Latin and Ukrainian words render as large text
+when they fit; narrow-terminal fallback remains intact.
+
+Verified with:
+
+```bash
+/home/arch/.local/share/pipx/venvs/lyra-terminal/bin/python scripts/verify.py --sandbox-poll
+# 89 tests passed, zero skipped.
+ruff check src tests scripts
+ruff format --check src tests scripts
+.venv/bin/python -m build --wheel --no-isolation
+git diff --check
+sober preflight
+```
+
+Ruff was run from the locally installed Zed language-server distribution.
+Headless UI checks cover applying each requested color, cancelling a color
+change, theme cycling, and clearing a custom accent when cycling. Configuration
+checks cover the white default and palette persistence, including legacy neon.
+ASCII checks cover both bracket glyphs, parenthesized words, and narrow widths.
+Live desktop playback was not retested for these display-only changes.
+
 ## Repository presentation
 
 README now contains a real headless demo capture, quick start, feature overview,

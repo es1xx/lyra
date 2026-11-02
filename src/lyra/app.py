@@ -425,6 +425,10 @@ class LyraApp(App[None]):
                 self.config.ascii_art = result["ascii_art"]
                 self.config.show_context = result["show_context"]
                 self.config.compact = result["compact"]
+                if result["theme"] != self.config.theme:
+                    self.config.theme = result["theme"]
+                    self.config.accent = ""
+                    self.apply_accent()
                 self.apply_display_preferences()
 
         self.push_screen(SettingsScreen(self.config), applied)

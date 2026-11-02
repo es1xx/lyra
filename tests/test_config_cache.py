@@ -18,7 +18,16 @@ class ConfigTests(unittest.TestCase):
 
     def test_defaults_without_file(self):
         self.assertEqual(load_config(self.path).mode, "duo")
+        self.assertEqual(load_config(self.path).theme, "white")
+        self.assertEqual(load_config(self.path).accent_color, "#ffffff")
         self.assertFalse(self.path.exists())
+
+    def test_palette_roundtrip_and_legacy_theme(self):
+        for theme in ("white", "violet", "green", "cyan", "amber", "neon"):
+            with self.subTest(theme=theme):
+                config = Config(theme=theme)
+                save_config(config, self.path)
+                self.assertEqual(load_config(self.path), config)
 
     def test_atomic_roundtrip(self):
         config = Config(

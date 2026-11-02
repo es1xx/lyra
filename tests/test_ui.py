@@ -6,6 +6,32 @@ HAS_TEXTUAL = importlib.util.find_spec("textual") is not None
 
 @unittest.skipUnless(HAS_TEXTUAL, "Textual is not installed; UI runtime verification unavailable")
 class UITests(unittest.IsolatedAsyncioTestCase):
+    async def test_color_selection_apply_cancel_and_cycle(self):
+        from textual.widgets import Select
+
+        from lyra.app import LyraApp
+        from lyra.config import THEMES, Config
+
+        app = LyraApp(Config(), demo=True)
+        async with app.run_test(size=(100, 36)) as pilot:
+            await pilot.pause()
+            self.assertEqual(app.config.accent_color, "#ffffff")
+            for theme in ("violet", "green", "cyan", "white"):
+                await pilot.press("s")
+                app.screen.query_one("#setting-theme", Select).value = theme
+                await pilot.click("#apply-settings")
+                await pilot.pause()
+                self.assertEqual(app.config.theme, theme)
+                self.assertEqual(app.widgets["brand"].styles.color.hex.lower(), THEMES[theme])
+            await pilot.press("s")
+            app.screen.query_one("#setting-theme", Select).value = "violet"
+            await pilot.press("escape")
+            self.assertEqual(app.config.theme, "white")
+            app.config.accent = "#123456"
+            await pilot.press("t")
+            self.assertEqual(app.config.theme, "violet")
+            self.assertEqual(app.config.accent, "")
+
     async def test_demo_controls_and_modals(self):
         from lyra.app import LyraApp
         from lyra.config import Config

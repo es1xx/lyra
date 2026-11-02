@@ -11,7 +11,14 @@ from pathlib import Path
 
 from platformdirs import user_cache_path, user_config_path
 
-THEMES = {"neon": "#a3ff79", "cyan": "#67e8f9", "violet": "#c4a1ff", "amber": "#ffd580"}
+THEMES = {
+    "white": "#ffffff",
+    "violet": "#c4a1ff",
+    "green": "#a3ff79",
+    "cyan": "#67e8f9",
+    "amber": "#ffd580",
+    "neon": "#a3ff79",  # Keep saved configurations from earlier versions valid.
+}
 KEYS = {
     "space": "toggle_play",
     "left": "seek_back",
@@ -38,7 +45,7 @@ class ConfigError(ValueError):
 
 @dataclass
 class Config:
-    theme: str = "neon"
+    theme: str = "white"
     accent: str = ""
     provider: str = "lrclib"
     mode: str = "duo"
@@ -70,7 +77,7 @@ class Config:
                 else:
                     raise ConfigError(f"{name} has the wrong TOML type")
         if self.theme not in THEMES or self.mode not in ("word", "duo"):
-            raise ConfigError("theme must be neon/cyan/violet/amber; mode must be word/duo")
+            raise ConfigError(f"theme must be {'/'.join(THEMES)}; mode must be word/duo")
         if self.provider not in ("lrclib", "local"):
             raise ConfigError("provider must be lrclib or local")
         if self.accent and not re.fullmatch(r"#[0-9a-fA-F]{6}", self.accent):

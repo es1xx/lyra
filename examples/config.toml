@@ -1,5 +1,5 @@
 # LYRA preferences. Positive sync offset advances lyrics.
-theme = "neon"
+theme = "white"
 accent = ""
 provider = "lrclib"
 mode = "duo"

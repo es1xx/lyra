@@ -24,3 +24,17 @@ class AsciiTests(unittest.TestCase):
             with self.subTest(letter=letter):
                 self.assertEqual(len(pattern.split("/")), 5)
                 self.assertEqual(len(set(map(len, pattern.split("/")))), 1)
+
+    def test_parenthesized_words_render_with_both_brackets(self):
+        for word in ("(Hello)", "(Привіт)", "(Oh", "yeah)"):
+            with self.subTest(word=word):
+                art = render_ascii(word, 100, 8)
+                self.assertEqual(len(art.splitlines()), 5)
+                self.assertEqual(len(set(map(len, art.splitlines()))), 1)
+                self.assertEqual(render_ascii(word, 3, 8), word.upper())
+        left = render_ascii("(", 3, 5).splitlines()
+        right = render_ascii(")", 3, 5).splitlines()
+        self.assertEqual(left, [row[::-1] for row in right])
+        art = render_ascii("(Hi)", 80, 8).splitlines()
+        self.assertEqual([row[:3] for row in art], left)
+        self.assertEqual([row[-3:] for row in art], right)

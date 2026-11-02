@@ -84,8 +84,8 @@ player, session D-Bus connection, or network requests.
 | W / D | Word / duo mode |
 | C | Compact view |
 | A | Toggle large ASCII letters; enabling selects word mode |
-| S | Display settings: ASCII, small lyric text, compact view |
-| T | Cycle neon, cyan, violet, amber |
+| S | Display settings: color, ASCII, small lyric text, compact view |
+| T | Cycle white, violet, green, cyan, amber, legacy neon |
 | P | Player chooser; arrows and Enter select, Escape cancels |
 | R | Refresh lyrics |
 | H / ? | Help; Escape closes |
@@ -97,11 +97,14 @@ a status message. Plain lyrics can be scrolled with the mouse wheel.
 Press **S** to choose large ASCII words, retain/hide the small lyric text beneath
 them, or enable compact view. Press Apply to use the changes; Escape cancels.
 **A** quickly toggles ASCII and starts in word mode; **D** can still select duo.
-The built-in five-row ASCII font supports Latin letters, Ukrainian/Cyrillic,
+The built-in five-row ASCII font supports parentheses `()`, Latin letters, Ukrainian/Cyrillic,
 digits and common punctuation. Words that do not fit, or have unsupported glyphs,
 remain normal text with their original spelling. Preferences are saved on exit.
 Compact view hides status and timing labels; C restores them. With small lyric
 text enabled, the current full line remains visible below the active word.
+
+White is the default for new configurations. Choose a color with **S**, or cycle
+with **T**. Existing saved themes and custom accents are preserved until changed.
 
 ## Timing and lyric sources
 
@@ -196,7 +199,7 @@ comments/custom formatting are not retained. Unknown options and invalid values
 produce an error naming the file. A `--config` path changes both load and save.
 
 ```toml
-theme = "neon"                   # neon | cyan | violet | amber
+theme = "white"                  # white | violet | green | cyan | amber | neon
 accent = ""                      # optional #RRGGBB; T clears this override
 provider = "lrclib"               # lrclib | local (requires --lyrics)
 mode = "duo"                     # word | duo
